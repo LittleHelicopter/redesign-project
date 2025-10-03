@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Dashboard</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        const ChevronDown = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+        );
+
+        const ChevronRight = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+        );
+
+        const Calendar = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+        );
+
+        const Bell = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+        );
+
+        const TaskDashboard = () => {
+            // Mock data
+            const mockTasks = [
+                {
+                    id: 1,
+                    course: 'INTRODUCTION TO HUMAN-COMPUTER INTERACTION',
+                    courseCode: 'FA25',
+                    type: 'assignment',
+                    title: 'Assignment 2',
+                    date: '2025-09-28',
+                    time: '11:59 PM',
+                    points: 3,
+                    status: 'Graded'
+                },
+                {
+                    id: 2,
+                    course: 'DEEP LEARNING',
+                    courseCode: 'FA25',
+                    type: 'announcement',
+                    title: 'OH Today',
+                    date: '2025-09-29',
+                    time: '9:45 AM'
+                },
+                {
+                    id: 3,
+                    course: 'ARTIFICIAL INTELLIGENCE',
+                    courseCode: 'FA25',
+                    type: 'event',
+                    title: 'Lecture: Informed Search. AIMA book: Chapters 3.4, 3.5',
+                    date: '2025-09-30',
+                    time: '4:30 PM to 6:20 PM'
+                },
+                {
+                    id: 4,
+                    course: 'DEEP LEARNING',
+                    courseCode: 'FA25',
+                    type: 'announcement',
+                    title: 'OH Today',
+                    date: '2025-09-30',
+                    time: '10:09 AM'
+                },
+                {
+                    id: 5,
+                    course: 'ARTIFICIAL INTELLIGENCE',
+                    courseCode: 'FA25',
+                    type: 'assignment',
+                    title: 'Project Proposal',
+                    date: '2025-10-05',
+                    time: '11:59 PM',
+                    points: 10
+                },
+                {
+                    id: 6,
+                    course: 'DEEP LEARNING',
+                    courseCode: 'FA25',
+                    type: 'assignment',
+                    title: 'Homework 3',
+                    date: '2025-10-07',
+                    time: '11:59 PM',
+                    points: 15
+                },
+                {
+                    id: 7,
+                    course: 'INTRODUCTION TO HUMAN-COMPUTER INTERACTION',
+                    courseCode: 'FA25',
+                    type: 'assignment',
+                    title: 'Final Project Milestone 1',
+                    date: '2025-10-10',
+                    time: '11:59 PM',
+                    points: 20
+                }
+            ];
+
+            const [filterType, setFilterType] = useState('all');
+            const [viewMode, setViewMode] = useState('date');
+            const [expandedCourses, setExpandedCourses] = useState({});
+
+            // Filter tasks
+            const filteredTasks = mockTasks.filter(task => {
+                if (filterType === 'assignments') {
+                    return task.type === 'assignment';
+                } else if (filterType === 'announcements') {
+                    return task.type === 'announcement' || task.type === 'event';
+                }
+                return true;
+            });
+
+            // Group by date
+            const groupByDate = (tasks) => {
+                const groups = {};
+                tasks.forEach(task => {
+                    const date = new Date(task.date);
+                    const dateKey = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+                    if (!groups[dateKey]) {
+                        groups[dateKey] = [];
+                    }
+                    groups[dateKey].push(task);
+                });
+                return groups;
+            };
+
+            // Group by course
+            const groupByCourse = (tasks) => {
+                const groups = {};
+                tasks.forEach(task => {
+                    const courseKey = task.course;
+                    if (!groups[courseKey]) {
+                        groups[courseKey] = [];
+                    }
+                    groups[courseKey].push(task);
+                });
+                return groups;
+            };
+
+            const toggleCourse = (courseName) => {
+                setExpandedCourses(prev => ({
+                    ...prev,
+                    [courseName]: !prev[courseName]
+                }));
+            };
+
+            const getCourseColor = (course) => {
+                if (course.includes('HUMAN-COMPUTER')) return 'bg-orange-600';
+                if (course.includes('DEEP LEARNING')) return 'bg-purple-600';
+                if (course.includes('ARTIFICIAL INTELLIGENCE')) return 'bg-green-700';
+                return 'bg-gray-600';
+            };
+
+            const renderTask = (task) => (
+                <div key={task.id} className="flex items-center gap-4 p-4 bg-white border-b hover:bg-gray-50">
+                    <input type="checkbox" className="w-5 h-5 rounded border-gray-300" />
+                    
+                    <div className="flex-1">
+                        <div className="text-sm text-gray-500 mb-1">
+                            {task.course} ({task.courseCode}) {task.type.toUpperCase()}
+                        </div>
+                        <div className="text-blue-600 font-medium">{task.title}</div>
+                    </div>
+
+                    {task.status && (
+                        <span className="px-3 py-1 text-sm border border-gray-300 rounded-full">
+                            {task.status}
+                        </span>
+                    )}
+
+                    <div className="text-right">
+                        {task.points && (
+                            <div className="text-lg font-semibold mb-1">{task.points} PTS</div>
+                        )}
+                        <div className="text-sm text-gray-600">
+                            {task.time ? `DUE: ${task.time}` : task.time}
+                        </div>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="min-h-screen bg-gray-50">
+                    {/* Header */}
+                    <div className="bg-white border-b">
+                        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+                            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+                            <div className="flex items-center gap-4">
+                                <button className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">Today</button>
+                                <button className="p-2 hover:bg-gray-100 rounded">+</button>
+                                <button className="p-2 hover:bg-gray-100 rounded"><Calendar /></button>
+                                <button className="p-2 hover:bg-gray-100 rounded"><Bell /></button>
+                                <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                                    NEW ACTIVITY ↑
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Filter and View Controls */}
+                    <div className="max-w-7xl mx-auto px-6 py-6">
+                        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                            <div className="flex flex-col md:flex-row gap-6">
+                                {/* Task Type Filter */}
+                                <div className="flex-1">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                        Task Type Filter
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setFilterType('assignments')}
+                                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                                filterType === 'assignments'
+                                                    ? 'bg-blue-600 text-white'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            }`}
+                                        >
+                                            Assignments Only
+                                        </button>
+                                        <button
+                                            onClick={() => setFilterType('announcements')}
+                                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                                filterType === 'announcements'
+                                                    ? 'bg-blue-600 text-white'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            }`}
+                                        >
+                                            Announcements/Events
+                                        </button>
+                                        <button
+                                            onClick={() => setFilterType('all')}
+                                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                                filterType === 'all'
+                                                    ? 'bg-blue-600 text-white'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            }`}
+                                        >
+                                            All Items
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* View Mode Toggle */}
+                                <div className="flex-1">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                        View Customization
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setViewMode('date')}
+                                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                                viewMode === 'date'
+                                                    ? 'bg-green-600 text-white'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            }`}
+                                        >
+                                            Sort by Due Date
+                                        </button>
+                                        <button
+                                            onClick={() => setViewMode('course')}
+                                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                                viewMode === 'course'
+                                                    ? 'bg-green-600 text-white'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            }`}
+                                        >
+                                            Group by Course
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Result Statistics */}
+                            <div className="mt-4 pt-4 border-t">
+                                <p className="text-sm text-gray-600">
+                                    Showing <span className="font-semibold">{filteredTasks.length}</span> tasks
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Task List */}
+                        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                            {viewMode === 'date' ? (
+                                // Sort by date view
+                                Object.entries(groupByDate(filteredTasks)).map(([date, tasks]) => (
+                                    <div key={date}>
+                                        <div className="bg-gray-100 px-6 py-3 font-semibold text-gray-700 border-b">
+                                            {date}
+                                        </div>
+                                        {tasks.map(renderTask)}
+                                    </div>
+                                ))
+                            ) : (
+                                // Group by course view
+                                Object.entries(groupByCourse(filteredTasks)).map(([course, tasks]) => (
+                                    <div key={course}>
+                                        <button
+                                            onClick={() => toggleCourse(course)}
+                                            className="w-full flex items-center gap-3 px-6 py-4 bg-gray-50 hover:bg-gray-100 border-b transition-colors"
+                                        >
+                                            <div className={`w-1 h-12 ${getCourseColor(course)} rounded`}></div>
+                                            {expandedCourses[course] ? <ChevronDown /> : <ChevronRight />}
+                                            <div className="flex-1 text-left">
+                                                <div className="font-semibold text-gray-900">{course}</div>
+                                                <div className="text-sm text-gray-600">{tasks.length} tasks</div>
+                                            </div>
+                                        </button>
+                                        {expandedCourses[course] && (
+                                            <div className="bg-white">
+                                                {tasks.map(renderTask)}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<TaskDashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html>
